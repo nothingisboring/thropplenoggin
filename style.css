@@ -1,6 +1,6 @@
  <style>
   h2 {
-            font-family: 'Montserrat', Sans-Serif;
+            font-family: 'Quicksand', Sans-Serif;
             font-weight: 400;
          }
 
@@ -23,11 +23,11 @@
 } 
 
 .city, .bum, .arse {
-  font-family: 'IBM Plex Serif';
+  font-family: 'Quicksand';
 }
 
 .nob {
-  font-family: 'IBM Plex Serif', black;
+  font-family: 'Lora', black;
 }
 
 .clue-list {
