@@ -1,0 +1,288 @@
+ <style>
+        body {
+            /* --- DEFAULT THEME COLOR VARIABLES --- */
+            --clr-bg: #f5f5f4;              /* stone-100 */
+            --clr-text-default: #1f2937;   /* gray-800 */
+            --clr-text-muted: #57534e;     /* stone-600 */
+            --clr-text-header: #44403c;    /* stone-700 */
+            --clr-text-placeholder: #9ca3af; /* coolGray-400 */
+            --clr-text-link: #12b093;       /* Primary Action/Solved Link */
+            --clr-text-final-clue: #7c2d12; /* amber-900 */
+            --clr-text-on-solved: #ffffff;
+            --clr-text-on-primary: #ffffff;
+            --clr-text-p2-inactive: #64748b; /* slate-500 */
+
+            --clr-border-default: #d1d5db;  /* gray-300 */
+            --clr-border-backface: #7dd3fc; /* sky-300 */
+            --clr-border-error: #ef4444;    /* red-500 */
+            --clr-border-solved: #0e8e77;   /* Darker primary */
+            --clr-border-p2-inactive: #5eead4; /* teal-300 */
+
+            --clr-primary: #12b093;         /* Main action color (buttons, solved boxes) */
+            --clr-primary-hover: #0e8e77;   /* Darker primary */
+            --clr-primary-disabled: #6cd4c1;/* Lighter primary */
+            --clr-secondary-info: #7dd3fc;  /* Info/Backface borders (sky-300) */
+            --clr-error: #ef4444;           /* Error state red */
+            --clr-error-bg: #fee2e2;        /* red-100 */
+
+            --clr-box-bg-front: #ffffff;
+            --clr-box-bg-back: #f0f9ff;      /* sky-50 */
+            --clr-box-bg-solved: var(--clr-primary);
+            --clr-box-bg-final: #0a5c4d;     /* Darkest teal for final center */
+            --clr-box-bg-p2-inactive-front: #f0fdfa; /* teal-50 */
+            --clr-box-bg-p2-inactive-back: #ccfbf1;  /* teal-100 */
+
+            --clr-glow-1: var(--clr-secondary-info); /* sky-300 */
+            --clr-glow-2: #0ea5e9;          /* sky-500 */
+
+             /* Message Colors (used via JS - define CSS rules below) */
+            --clr-message-success: var(--clr-primary);
+            --clr-message-info: var(--clr-glow-2); /* sky-500 */
+            --clr-message-warning: #f97316; /* orange-500 */
+            --clr-message-error: var(--clr-error);
+            --clr-message-final: #8b5cf6;  /* purple-500 */
+            /* --- End Default Theme Variables --- */
+
+            font-family: 'Inter', sans-serif;
+            background-color: var(--clr-bg);
+            transition: background-color 0.5s ease; /* Smooth transition for bg */
+        }
+
+        /* --- Mondrian Theme Override --- */
+        body.mondrian-theme {
+            /* Re-define variables for the Mondrian look */
+            --clr-bg: #FFFFFF;              /* White background */
+            --clr-text-default: #000000;   /* Black text */
+            --clr-text-muted: #000000;     /* Black muted text */
+            --clr-text-header: #000000;    /* Black header */
+            --clr-text-placeholder: #777777; /* Gray placeholder on White/Yellow */
+            --clr-text-link: #0000FF;       /* Blue solved link */
+            --clr-text-final-clue: #000000; /* Black final clue text */
+            --clr-text-on-solved: #FFFFFF; /* White text on Red/Blue solved boxes */
+            --clr-text-on-primary: #FFFFFF;/* White text on Red buttons */
+            --clr-text-p2-inactive: #000000; /* Black '?' */
+
+            --clr-border-default: #000000;  /* Black borders */
+            --clr-border-backface: #0000FF; /* Blue border for back face */
+            --clr-border-error: #FF0000;    /* Red error border */
+            --clr-border-solved: #000000;   /* Black border for solved boxes */
+            --clr-border-p2-inactive: #FFFF00; /* Yellow dashed border for inactive P2 */
+
+            --clr-primary: #FF0000;         /* Red for primary buttons/solved boxes */
+            --clr-primary-hover: #CC0000;   /* Darker Red */
+            --clr-primary-disabled: #FF9999;/* Lighter Red */
+            --clr-secondary-info: #0000FF;  /* Blue for secondary elements */
+            --clr-error: #FF0000;           /* Red error text */
+            --clr-error-bg: #FFDDDD;        /* Light Red error background */
+
+            --clr-box-bg-front: #FFFFFF;    /* White front face */
+            --clr-box-bg-back: #FFFF00;      /* Yellow back face */
+            --clr-box-bg-solved: var(--clr-primary); /* Red solved background */
+            --clr-box-bg-final: #0000FF;     /* Blue final center box background */
+            --clr-box-bg-p2-inactive-front: #FFFFFF; /* White bg for inactive P2 */
+            --clr-box-bg-p2-inactive-back: #FFFFFF;  /* White bg for inactive P2 back */
+
+            --clr-glow-1: var(--clr-secondary-info); /* Blue glow */
+            --clr-glow-2: #FFFF00;          /* Yellow glow */
+
+             /* Message Colors */
+            --clr-message-success: #0000FF;  /* Blue success */
+            --clr-message-info: #0000FF;     /* Blue info */
+            --clr-message-warning: #FF0000; /* Red warning */
+            --clr-message-error: #FF0000;   /* Red error */
+            --clr-message-final: #000000;  /* Black final message */
+
+             /* --- Optional: Thicker Borders --- */
+             /* --border-width-default: 3px; */ /* Uncomment and apply below if desired */
+        }
+        /* Optional: Apply thicker borders in Mondrian theme */
+        /*
+        body.mondrian-theme .clue-box-front,
+        body.mondrian-theme .clue-box-back,
+        body.mondrian-theme .missing-link-center {
+             border-width: var(--border-width-default, 3px);
+             border-style: solid; // Ensure solid if changing width
+        }
+        body.mondrian-theme .clue-box-container.phase2-inactive[data-phase2-clue-id] .clue-box-front,
+        body.mondrian-theme .clue-box-container.phase2-inactive[data-phase2-clue-id] .clue-box-back {
+            border-style: dashed; // Keep dashed for inactive P2
+        }
+        */
+
+        /* --- Define rules for JS-added text classes using variables --- */
+        .text-teal-600 { color: var(--clr-message-success); }
+        .text-blue-600 { color: var(--clr-message-info); }
+        .text-orange-600 { color: var(--clr-message-warning); }
+        .text-red-600 { color: var(--clr-message-error); }
+        .text-purple-600 { color: var(--clr-message-final); }
+
+
+        h1 {
+            font-family: 'Badeen Display', Sans-Serif;
+            font-weight: 400;
+        }
+
+        h2 {
+            font-family: 'Poppins', Sans-Serif;
+            font-weight: 400;
+        }
+
+
+        /* --- Animations --- */
+        @keyframes shake { /* No colors here */
+            0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); } 20%, 40%, 60%, 80% { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.5s ease-in-out; }
+        @keyframes reveal { /* No colors here */
+            0% { transform: scale(0.5); opacity: 0; } 80% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; }
+        }
+        .final-celebration { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { /* No colors here */
+            0%, 100% { opacity: 1; } 50% { opacity: .7; }
+        }
+        @keyframes glow { /* Uses variables */
+            0%, 100% { box-shadow: 0 0 10px var(--clr-glow-1); }
+            50% { box-shadow: 0 0 20px var(--clr-glow-2); }
+        }
+        .center-glow { animation: glow 2s infinite ease-in-out; transition: background-color 0.3s ease; }
+         @keyframes fadeIn { /* No colors here */
+            from { opacity: 0; transform: translate(-50%, -60%); } to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        .solutions-modal { animation: fadeIn 0.3s ease-out; }
+
+
+        /* --- General Styles --- */
+        #source-type-emoji { font-size: 2rem; line-height: 1; margin-bottom: 0.5rem; }
+        #puzzle-title { color: var(--clr-text-header); transition: color 0.5s ease; }
+
+        /* Grid container */
+        .missing-link-grid {
+            display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); grid-template-rows: repeat(3, minmax(100px, 1fr));
+            gap: 1rem; width: 100%; max-width: 500px; aspect-ratio: 1 / 1; margin-bottom: 1.5rem;
+        }
+
+        /* Central Missing Link Box */
+        .missing-link-center {
+            grid-column: 2 / 3; grid-row: 2 / 3; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background-color: var(--clr-box-bg-front); border: 2px solid var(--clr-border-default);
+            border-radius: 0.375rem; padding: 1rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); text-align: center; min-height: 120px;
+             transition: background-color 0.5s ease, border-color 0.5s ease;
+        }
+        .missing-link-center input {
+            width: 90%; padding: 6px 10px; border: 1px solid var(--clr-border-default);
+            border-radius: 0.25rem; margin-bottom: 8px; text-align: center;
+            color: var(--clr-text-default); background-color: var(--clr-box-bg-front); /* Ensure input colors match theme */
+        }
+         .missing-link-center input::placeholder { color: var(--clr-text-placeholder); }
+         .missing-link-center input.input-error { border-color: var(--clr-border-error); background-color: var(--clr-error-bg); }
+        .missing-link-center button {
+            padding: 4px 12px; font-size: 0.85rem; background-color: var(--clr-primary); color: var(--clr-text-on-primary);
+            border: none; border-radius: 0.25rem; cursor: pointer; transition: background-color 0.2s;
+        }
+        .missing-link-center button:hover:not(:disabled) { background-color: var(--clr-primary-hover); }
+        .missing-link-center button:disabled { background-color: var(--clr-primary-disabled); cursor: not-allowed; }
+        .missing-link-center p { font-size: 0.8rem; color: var(--clr-text-muted); margin-bottom: 5px; transition: color 0.5s ease;}
+        .missing-link-center .correct-link { font-weight: 700; font-size: 1.1rem; color: var(--clr-text-link); animation: reveal 0.6s ease-out forwards; transition: color 0.5s ease;}
+
+        /* --- Clue Box Styles (Used for Phase 1 & Phase 2) --- */
+        .clue-box-container { perspective: 1000px; min-height: 100px; height: 100%; }
+        .clue-box-container[data-clue-id='1'] { grid-column: 2 / 3; grid-row: 1 / 2; }
+        .clue-box-container[data-clue-id='2'] { grid-column: 1 / 2; grid-row: 2 / 3; }
+        .clue-box-container[data-clue-id='3'] { grid-column: 3 / 4; grid-row: 2 / 3; }
+        .clue-box-container[data-clue-id='4'] { grid-column: 2 / 3; grid-row: 3 / 4; }
+
+        .clue-box-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; }
+        .clue-box-container.is-flipped .clue-box-inner { transform: rotateY(180deg); }
+
+        .clue-box-front, .clue-box-back {
+            position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.75rem;
+            border: 2px solid var(--clr-border-default); border-radius: 0.375rem; background-color: var(--clr-box-bg-front);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); color: var(--clr-text-default);
+             transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease; /* Add transitions */
+        }
+        .clue-box-back { background-color: var(--clr-box-bg-back); border-color: var(--clr-border-backface); transform: rotateY(180deg); }
+        .clue-box-back input {
+            width: 90%; padding: 4px 8px; border: 1px solid var(--clr-border-default); border-radius: 0.25rem; margin-bottom: 5px; text-align: center; font-size: 0.85rem;
+            color: var(--clr-text-default); background-color: var(--clr-box-bg-front); /* Ensure input colors match theme */
+        }
+        .clue-box-back input.input-error { border-color: var(--clr-border-error); background-color: var(--clr-error-bg); }
+        .clue-box-back button {
+             padding: 3px 10px; font-size: 0.8rem; background-color: var(--clr-primary); color: var(--clr-text-on-primary);
+             border: none; border-radius: 0.25rem; cursor: pointer; transition: background-color 0.2s;
+         }
+        .clue-box-back button:hover:not(:disabled) { background-color: var(--clr-primary-hover); }
+         .clue-box-back button:disabled { background-color: var(--clr-primary-disabled); cursor: not-allowed; }
+
+        /* Solved states */
+        .clue-box-container.clue-solved .clue-box-front { background-color: var(--clr-box-bg-solved); border-color: var(--clr-border-solved); color: var(--clr-text-on-solved); font-weight: 500; }
+        .clue-box-container.clue-solved .clue-box-inner { cursor: default; }
+
+        /* Dimming / Interactivity states */
+        .puzzle-solved .clue-box-container[data-clue-id] .clue-box-front { opacity: 0.7; }
+        .puzzle-solved .clue-box-inner { cursor: default; }
+
+        .phase2-inactive { opacity: 0.65; pointer-events: none; }
+         /* Specific styling for INACTIVE Phase 2 boxes */
+         .clue-box-container.phase2-inactive[data-phase2-clue-id] .clue-box-front,
+         .clue-box-container.phase2-inactive[data-phase2-clue-id] .clue-box-back {
+             background-color: var(--clr-box-bg-p2-inactive-front); border-color: var(--clr-border-p2-inactive);
+             border-style: dashed; border-width: 2px;
+         }
+         .clue-box-container.phase2-inactive[data-phase2-clue-id] .clue-box-back { background-color: var(--clr-box-bg-p2-inactive-back); }
+         .clue-box-container.phase2-inactive[data-phase2-clue-id] .clue-box-front { color: var(--clr-text-p2-inactive); font-weight: bold; }
+         .phase2-inactive .clue-box-inner { cursor: default; }
+
+        /* Make sure active styles override the inactive ones */
+         .clue-box-container.phase2-active:not(.clue-solved)[data-phase2-clue-id] .clue-box-front {
+             background-color: var(--clr-box-bg-front); border-color: var(--clr-border-default); border-style: solid;
+             color: var(--clr-text-default); font-weight: normal;
+         }
+          .clue-box-container.phase2-active:not(.clue-solved)[data-phase2-clue-id] .clue-box-back {
+             background-color: var(--clr-box-bg-back); border-color: var(--clr-border-backface); border-style: solid;
+         }
+         .phase2-active .clue-box-inner { cursor: pointer; }
+
+
+        /* --- Phase 3 Styles --- */
+        .phase3-solution {
+            font-weight: 700; font-size: 1.2rem; color: var(--clr-text-on-solved); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            background-color: rgba(255, 255, 255, 0.2); padding: 8px 16px; border-radius: 4px; animation: reveal 0.6s ease-out forwards;
+        }
+        .phase3-clue {
+            font-weight: 500; font-size: 0.85rem; color: var(--clr-text-final-clue); margin: 8px 0; padding: 0 8px; text-align: center;
+            transition: color 0.5s ease;
+        }
+        #phase3-guess {
+            width: 85%; padding: 4px 8px; font-size: 0.85rem; border: 1px solid var(--clr-border-default);
+            border-radius: 0.25rem; margin-bottom: 6px; text-align: center;
+            color: var(--clr-text-default); background-color: var(--clr-box-bg-front); /* Ensure input colors match theme */
+        }
+        #submit-phase3 {
+            padding: 4px 12px; font-size: 0.8rem; background-color: var(--clr-primary); color: var(--clr-text-on-primary);
+            border: none; border-radius: 0.25rem; cursor: pointer; transition: background-color 0.2s; white-space: nowrap; line-height: 1.2;
+        }
+        #submit-phase3:hover:not(:disabled) { background-color: var(--clr-primary-hover); }
+         #submit-phase3:disabled { background-color: var(--clr-primary-disabled); cursor: not-allowed; }
+
+        .missing-link-center.phase3-active {
+            padding: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; min-height: 120px;
+            background-color: var(--clr-box-bg-front); /* Use variable for active P3 center */
+        }
+        /* Style for the final solved center box */
+        .missing-link-center.final-solved {
+             background-color: var(--clr-box-bg-final) !important; /* Use variable - important if needed */
+             border-color: var(--clr-box-bg-final);
+        }
+
+        /* Modal Styles */
+        .solutions-modal { /* Basic structure, colors depend on content */
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); z-index: 1000; text-align: center; max-width: 90%; width: 300px;
+        }
+         /* Style modal content using variables where appropriate */
+         .solutions-modal h3 { color: var(--clr-text-header); /* Example */ }
+         .solutions-modal p { color: var(--clr-text-link); /* Example */}
+         .solutions-modal button { background-color: var(--clr-primary); color: var(--clr-text-on-primary); /* Example */ }
+
+
+    </style>
