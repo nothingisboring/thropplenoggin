@@ -1,6 +1,3 @@
-
-
-    <script>
         // --- Game Data --- (No changes)
         const gameData = { missingLink: "Composition with Red, Blue and Yellow", sourceTypeEmoji: '🎨', phase3Solution: "White", phase3Clue: "What links the surrounding answers?", clues: [ { id: 1, text: "Warning", solution: "Red", solved: false }, { id: 2, text: "Custard", solution: "Yellow", solved: false }, { id: 3, text: "Sad", solution: "Blue", solved: false }, { id: 4, text: "Demonstrably sad", solution: "Black", solved: false } ], phase2Clues: [ { id: 'p2_1', gridPos: [1, 1], text: "Low IQ, presidentially so? (5)", solution: "Thick", solved: false }, { id: 'p2_2', gridPos: [1, 3], text: "Up (8)", solution: "Vertical", solved: false }, { id: 'p2_3', gridPos: [3, 1], text: "Sideways (10)", solution: "Horizontal", solved: false }, { id: 'p2_4', gridPos: [3, 3], text: "White ones blow away, apparently (5)", solution: "Lines", solved: false } ], getClueById: function(id) { return this.clues.find(clue => clue.id === id); }, getPhase2ClueById: function(id) { return this.phase2Clues.find(clue => clue.id === id); } };
 
@@ -95,4 +92,4 @@
         }
     });
 });
-    </script>
+
