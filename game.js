@@ -1,1 +1,98 @@
 
+
+    <script>
+        // --- Game Data --- (No changes)
+        const gameData = { missingLink: "Composition with Red, Blue and Yellow", sourceTypeEmoji: '🎨', phase3Solution: "White", phase3Clue: "What links the surrounding answers?", clues: [ { id: 1, text: "Warning", solution: "Red", solved: false }, { id: 2, text: "Custard", solution: "Yellow", solved: false }, { id: 3, text: "Sad", solution: "Blue", solved: false }, { id: 4, text: "Demonstrably sad", solution: "Black", solved: false } ], phase2Clues: [ { id: 'p2_1', gridPos: [1, 1], text: "Low IQ, presidentially so? (5)", solution: "Thick", solved: false }, { id: 'p2_2', gridPos: [1, 3], text: "Up (8)", solution: "Vertical", solved: false }, { id: 'p2_3', gridPos: [3, 1], text: "Sideways (10)", solution: "Horizontal", solved: false }, { id: 'p2_4', gridPos: [3, 3], text: "White ones blow away, apparently (5)", solution: "Lines", solved: false } ], getClueById: function(id) { return this.clues.find(clue => clue.id === id); }, getPhase2ClueById: function(id) { return this.phase2Clues.find(clue => clue.id === id); } };
+
+        // --- Game State --- (No changes)
+        let solvedCluesCount = 0, totalClues = gameData.clues.length, linkSolved = false, phase2Active = false, solvedPhase2Count = 0, totalPhase2Clues = gameData.phase2Clues.length, phase3Active = false, phase3Solved = false, gameComplete = false;
+
+        // --- DOM Elements --- (No changes)
+        const gridEl = document.getElementById('missing-link-grid'), messageAreaEl = document.getElementById('message-area'), emojiIndicatorEl = document.getElementById('source-type-emoji'), puzzleTitleEl = document.getElementById('puzzle-title'), solutionsModalContainerEl = document.getElementById('solutions-modal-container');
+
+        // --- Initialization ---
+        function initGame() {
+            // *** Reset Theme ***
+            document.body.classList.remove('mondrian-theme');
+            // ******************
+
+            gridEl.innerHTML = ''; solvedCluesCount = 0; linkSolved = false; phase2Active = false; solvedPhase2Count = 0; phase3Active = false; phase3Solved = false; gameComplete = false; messageAreaEl.textContent = ''; puzzleTitleEl.textContent = ''; emojiIndicatorEl.textContent = gameData.sourceTypeEmoji || ''; solutionsModalContainerEl.innerHTML = '';
+            gameData.clues.forEach(clue => clue.solved = false); gameData.phase2Clues.forEach(clue => clue.solved = false);
+            gameData.clues.forEach(clueData => gridEl.appendChild(createPhase1ClueBox(clueData)));
+            gridEl.appendChild(createCenterBox()); gameData.phase2Clues.forEach(p2Data => gridEl.appendChild(createPhase2ClueBox(p2Data)));
+            checkAllCluesSolved();
+            messageAreaEl.style.color = 'var(--clr-text-default)'; // Ensure message area resets color
+        }
+
+        // --- Element Creation Functions --- (No changes)
+        function createPhase1ClueBox(clueData){ const container=document.createElement('div'); container.classList.add('clue-box-container'); container.dataset.clueId=clueData.id; const {inner, front, back}=createClueBoxInnerStructure(clueData.text); const input=createClueInput(); input.addEventListener('keydown', (e)=>{ if(e.key==='Enter')handleClueSubmit(clueData.id); input.classList.remove('input-error'); }); const button=createClueButton('Submit'); button.addEventListener('click', (e)=>{ e.stopPropagation(); handleClueSubmit(clueData.id); }); back.appendChild(input); back.appendChild(button); inner.appendChild(front); inner.appendChild(back); container.appendChild(inner); container.addEventListener('click', handleBoxClick); return container; }
+        function createPhase2ClueBox(p2Data){ const container=document.createElement('div'); container.classList.add('clue-box-container', 'phase2-inactive'); container.dataset.phase2ClueId=p2Data.id; container.style.gridColumn=`${p2Data.gridPos[1]} / span 1`; container.style.gridRow=`${p2Data.gridPos[0]} / span 1`; const {inner, front, back}=createClueBoxInnerStructure("?"); const input=createClueInput(); input.addEventListener('keydown', (e)=>{ if(e.key==='Enter')handlePhase2ClueSubmit(p2Data.id); input.classList.remove('input-error'); }); const button=createClueButton('Submit'); button.addEventListener('click', (e)=>{ e.stopPropagation(); handlePhase2ClueSubmit(p2Data.id); }); back.appendChild(input); back.appendChild(button); inner.appendChild(front); inner.appendChild(back); container.appendChild(inner); container.addEventListener('click', handleBoxClick); return container; }
+        function createClueBoxInnerStructure(clueText){ const inner=document.createElement('div'); inner.classList.add('clue-box-inner'); const front=document.createElement('div'); front.classList.add('clue-box-front'); front.textContent=clueText; const back=document.createElement('div'); back.classList.add('clue-box-back'); return {inner, front, back}; }
+        function createClueInput(){ const input=document.createElement('input'); input.type='text'; input.placeholder='Your answer...'; return input; }
+        function createClueButton(text){ const button=document.createElement('button'); button.textContent=text; return button; }
+        function createCenterBox(){ const centerBox=document.createElement('div'); centerBox.classList.add('missing-link-center'); centerBox.id='missing-link-center-box'; const centerTitle=document.createElement('p'); centerTitle.textContent='The Missing Link?'; centerTitle.id='missing-link-title'; const centerInput=document.createElement('input'); centerInput.type='text'; centerInput.id='missing-link-guess'; centerInput.placeholder='Guess the link...'; centerInput.disabled=true; centerInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter')handleLinkSubmit(); centerInput.classList.remove('input-error'); }); const centerButton=document.createElement('button'); centerButton.id='submit-link'; centerButton.textContent='Submit Link'; centerButton.disabled=true; centerButton.addEventListener('click', handleLinkSubmit); centerBox.appendChild(centerTitle); centerBox.appendChild(centerInput); centerBox.appendChild(centerButton); return centerBox; }
+
+        // --- Event Handlers & Logic ---
+        function handleBoxClick(event){ const container=event.currentTarget; if(gameComplete||phase3Active)return; const isPhase1Box=container.hasAttribute('data-clue-id'); const isPhase2Box=container.hasAttribute('data-phase2-clue-id'); let clueData; let canFlip=false; if(isPhase1Box&&!linkSolved&&!phase2Active){ clueData=gameData.getClueById(parseInt(container.dataset.clueId)); canFlip=clueData&&!clueData.solved; } else if(isPhase2Box&&phase2Active){ clueData=gameData.getPhase2ClueById(container.dataset.phase2ClueId); canFlip=clueData&&!clueData.solved; } if(!canFlip)return; if(container.classList.contains('is-flipped')){ if(event.target.tagName==='INPUT'||event.target.tagName==='BUTTON')return; container.classList.remove('is-flipped'); clearMessage(); } else { container.classList.add('is-flipped'); const input=container.querySelector('.clue-box-back input'); if(input)input.focus(); clearMessage(); } }
+        function handleClueSubmit(clueId){ if(linkSolved||gameComplete||phase2Active)return; const container=gridEl.querySelector(`.clue-box-container[data-clue-id='${clueId}']`); const input=container.querySelector('.clue-box-back input'); const front=container.querySelector('.clue-box-front'); const clueData=gameData.getClueById(clueId); const guess=input.value.trim(); if(!clueData||!guess||clueData.solved)return; const normalizedGuess=guess.toLowerCase().replace(/\s+/g, ' '); const normalizedSolution=clueData.solution.toLowerCase().replace(/\s+/g, ' '); if(normalizedGuess===normalizedSolution){ clueData.solved=true; solvedCluesCount++; front.textContent=clueData.solution; container.classList.add('clue-solved'); container.classList.remove('is-flipped'); input.value=''; input.disabled=true; container.querySelector('.clue-box-back button').disabled=true; displayMessage(`Clue ${clueId} solved!`, 'text-teal-600'); checkAllCluesSolved(); } else { input.classList.add('input-error'); displayMessage('Incorrect clue answer.', 'text-orange-600'); container.querySelector('.clue-box-inner').classList.add('shake'); setTimeout(()=>{ container.querySelector('.clue-box-inner').classList.remove('shake'); }, 500); } }
+        function checkAllCluesSolved(){ const linkInput=document.getElementById('missing-link-guess'); const linkButton=document.getElementById('submit-link'); if(solvedCluesCount===totalClues&&!linkSolved){ linkInput.disabled=false; linkButton.disabled=false; displayMessage('All Phase 1 clues solved! Guess the Missing Link?', 'text-teal-600'); linkInput.focus(); } else if(!linkSolved){ linkInput.disabled=true; linkButton.disabled=true; } }
+        function handleLinkSubmit() {
+            if (linkSolved || gameComplete) return;
+            const linkInput = document.getElementById('missing-link-guess'); const guess = linkInput.value.trim(); const normalizedGuess = guess.toLowerCase().replace(/\s+/g, ' '); const normalizedSolution = gameData.missingLink.toLowerCase().replace(/\s+/g, ' ');
+            if (normalizedGuess === normalizedSolution) {
+                linkSolved = true; displayMessage('Missing Link Correct!', 'text-teal-600'); linkInput.disabled = true; document.getElementById('submit-link').disabled = true; document.getElementById('missing-link-title').textContent = 'Link Found!';
+                const centerBox = document.getElementById('missing-link-center-box'); linkInput.style.display = 'none'; document.getElementById('submit-link').style.display = 'none';
+                const solvedLinkText = document.createElement('div'); solvedLinkText.classList.add('correct-link'); solvedLinkText.textContent = gameData.missingLink; centerBox.appendChild(solvedLinkText);
+
+                // *** Apply Mondrian Theme ***
+                document.body.classList.add('mondrian-theme');
+                // **************************
+
+                gridEl.classList.add('puzzle-solved');
+                setTimeout(startPhase2, 1000);
+            } else {
+                displayMessage('Incorrect Missing Link guess. Try again.', 'text-red-600'); linkInput.classList.add('input-error'); const centerBox = document.getElementById('missing-link-center-box'); centerBox.classList.add('shake'); setTimeout(() => { centerBox.classList.remove('shake'); }, 500);
+            }
+        }
+        function startPhase2(){ if(gameComplete||phase2Active)return; phase2Active=true; puzzleTitleEl.textContent="Phase 2: Solve the corner clues!"; displayMessage('Solve the four corner clues!', 'text-blue-600'); const phase2Boxes=gridEl.querySelectorAll('.clue-box-container[data-phase2-clue-id]'); phase2Boxes.forEach(box =>{ const phase2ClueId=box.dataset.phase2ClueId; const clueData=gameData.getPhase2ClueById(phase2ClueId); const frontElement=box.querySelector('.clue-box-front'); if(clueData&&frontElement){ frontElement.textContent=clueData.text; } box.classList.remove('phase2-inactive'); box.classList.add('phase2-active'); box.querySelector('.clue-box-inner').style.cursor='pointer'; }); const phase1Boxes=gridEl.querySelectorAll('.clue-box-container[data-clue-id]'); phase1Boxes.forEach(box =>{ box.querySelector('.clue-box-inner').style.cursor='default'; }); }
+        function handlePhase2ClueSubmit(phase2ClueId){ if(gameComplete||!phase2Active||phase3Active)return; const container=gridEl.querySelector(`.clue-box-container[data-phase2-clue-id='${phase2ClueId}']`); const input=container.querySelector('.clue-box-back input'); const front=container.querySelector('.clue-box-front'); const clueData=gameData.getPhase2ClueById(phase2ClueId); const guess=input.value.trim(); if(!clueData||!guess||clueData.solved)return; const normalizedGuess=guess.toLowerCase().replace(/\s+/g, ' '); const normalizedSolution=clueData.solution.toLowerCase().replace(/\s+/g, ' '); if(normalizedGuess===normalizedSolution){ clueData.solved=true; solvedPhase2Count++; front.textContent=clueData.solution; container.classList.add('clue-solved'); container.classList.remove('is-flipped'); input.value=''; input.disabled=true; container.querySelector('.clue-box-back button').disabled=true; container.querySelector('.clue-box-inner').style.cursor='default'; displayMessage(`Phase 2 Clue ${solvedPhase2Count}/${totalPhase2Clues} solved!`, 'text-teal-600'); if(solvedPhase2Count===totalPhase2Clues){ setTimeout(startPhase3, 1000); } } else { input.classList.add('input-error'); displayMessage('Incorrect Phase 2 answer.', 'text-orange-600'); container.querySelector('.clue-box-inner').classList.add('shake'); setTimeout(()=>{ container.querySelector('.clue-box-inner').classList.remove('shake'); }, 500); } }
+        function startPhase3(){ if(gameComplete||phase3Active)return; phase3Active=true; phase2Active=false; puzzleTitleEl.textContent="Phase 3: One final clue!"; displayMessage('The center holds one final clue!', 'text-purple-600'); const centerBox=document.getElementById('missing-link-center-box'); centerBox.innerHTML=''; centerBox.classList.add('center-glow', 'phase3-active'); centerBox.style.backgroundColor=''; const phase3ClueEl=document.createElement('div'); phase3ClueEl.classList.add('phase3-clue'); phase3ClueEl.textContent=gameData.phase3Clue; centerBox.appendChild(phase3ClueEl); const formContainer=document.createElement('div'); formContainer.style.cssText='display: flex; flex-direction: column; align-items: center; width: 100%; gap: 6px;'; const phase3Input=document.createElement('input'); phase3Input.type='text'; phase3Input.id='phase3-guess'; phase3Input.placeholder='Final answer...'; phase3Input.addEventListener('keydown', (e)=>{ if(e.key==='Enter')handlePhase3Submit(); phase3Input.classList.remove('input-error'); }); const phase3Button=document.createElement('button'); phase3Button.id='submit-phase3'; phase3Button.textContent='Submit Final Answer'; phase3Button.addEventListener('click', handlePhase3Submit); formContainer.appendChild(phase3Input); formContainer.appendChild(phase3Button); centerBox.appendChild(formContainer); const phase2Boxes=gridEl.querySelectorAll('.clue-box-container[data-phase2-clue-id]'); phase2Boxes.forEach(box =>{ box.classList.remove('phase2-active'); box.querySelector('.clue-box-inner').style.cursor='default'; if(!box.classList.contains('clue-solved')){ box.style.opacity='0.7'; } }); phase3Input.focus(); }
+        function handlePhase3Submit(){ if(gameComplete||!phase3Active)return; const phase3Input=document.getElementById('phase3-guess'); const guess=phase3Input.value.trim(); if(!guess)return; const normalizedGuess=guess.toLowerCase().replace(/\s+/g, ' '); const normalizedSolution=gameData.phase3Solution.toLowerCase().replace(/\s+/g, ' '); if(normalizedGuess===normalizedSolution){ phase3Solved=true; gameComplete=true; phase3Active=false; const centerBox=document.getElementById('missing-link-center-box'); centerBox.classList.remove('center-glow', 'phase3-active'); centerBox.classList.add('final-solved'); centerBox.innerHTML=''; const finalSolutionText=document.createElement('div'); finalSolutionText.classList.add('phase3-solution'); finalSolutionText.textContent=gameData.phase3Solution; centerBox.appendChild(finalSolutionText); gridEl.querySelectorAll('input, button').forEach(el => el.disabled=true); gridEl.style.pointerEvents='none'; setTimeout(endGameCelebration, 500); } else { phase3Input.classList.add('input-error'); displayMessage('Incorrect final answer. Try again.', 'text-orange-600'); const centerBox=document.getElementById('missing-link-center-box'); centerBox.classList.add('shake'); setTimeout(()=>{ centerBox.classList.remove('shake'); }, 500); } }
+
+        // --- Utility Functions ---
+        function showSolutionsModal(){ solutionsModalContainerEl.innerHTML=''; const modal=document.createElement('div'); modal.classList.add('solutions-modal'); modal.style.cssText=` position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); z-index: 1000; text-align: center; max-width: 90%; width: 300px; `; modal.innerHTML=` <h3 style="font-weight: bold; margin-bottom: 15px; font-size: 1.1em; color: var(--clr-text-header);">Link Found!</h3> <p style="font-size: 1.2em; font-weight: 500; color: var(--clr-text-link); margin-bottom: 20px;">${gameData.missingLink}</p> <button onclick="this.closest('.solutions-modal').nextElementSibling.remove(); this.closest('.solutions-modal').remove();" style=" padding: 8px 18px; background-color: var(--clr-primary); color: var(--clr-text-on-primary); border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; transition: background-color 0.2s; ">Close</button> `; const overlay=document.createElement('div'); overlay.style.cssText=` position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 999; `; overlay.onclick=()=>{ overlay.remove(); modal.remove(); }; solutionsModalContainerEl.appendChild(modal); solutionsModalContainerEl.appendChild(overlay); }
+        function endGameCelebration(){ puzzleTitleEl.textContent="Oblique solved!"; messageAreaEl.classList.add('final-celebration'); displayMessage('🧠 Congratulations! You can join the Obliquerati! 🧠', 'text-purple-600'); } // text-purple-600 uses variable now
+        function displayMessage(text, styleClasses='text-stone-700'){ messageAreaEl.textContent=text; messageAreaEl.className='h-10 mb-4 text-center font-medium'; if(styleClasses){ messageAreaEl.classList.add(...styleClasses.split(' ')); } if(gameComplete&&text.includes("Congratulations")){ messageAreaEl.classList.add('final-celebration'); } } // styleClasses now map to CSS rules using variables
+        function clearMessage(){ const currentText=messageAreaEl.textContent||""; if(!currentText.includes("Phase")&&!currentText.includes("Link")&&!currentText.includes("Congratulations")){ messageAreaEl.textContent=''; messageAreaEl.className='h-10 mb-4 text-center font-medium'; messageAreaEl.style.color='var(--clr-text-default)';} }
+
+          document.addEventListener('DOMContentLoaded', () => {
+    // --- Initialize Game ---
+    initGame();
+
+    // --- 'How to Play' Modal Logic ---
+    const howToPlayButton = document.getElementById('howToPlayButton');
+    const howToPlayModal = document.getElementById('howToPlayModal');
+    const closeModalButton = document.getElementById('closeModalButton');
+
+    // Show the modal when "How to Play" button is clicked
+    howToPlayButton.addEventListener('click', () => {
+        console.log('Button clicked!');
+        howToPlayModal.classList.remove('hidden');
+        howToPlayModal.classList.add('flex');
+    });
+
+    // Hide the modal when "Got it!" button is clicked
+    closeModalButton.addEventListener('click', () => {
+        howToPlayModal.classList.add('hidden');
+        howToPlayModal.classList.remove('flex');
+    });
+
+    // Hide the modal if the overlay (background) is clicked
+    howToPlayModal.addEventListener('click', (event) => {
+        if (event.target === howToPlayModal) {
+            howToPlayModal.classList.add('hidden');
+            howToPlayModal.classList.remove('flex');
+        }
+    });
+});
+    </script>
