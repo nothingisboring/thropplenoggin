@@ -290,11 +290,11 @@
         margin-top: 4px;
         text-align: center;
         }
-        .clue-box-container.clue-blocked {
-        background-color: var(--clr-error-bg);
-        border-color: var(--clr-error);
-        opacity: 0.6;
-        pointer-events: none;
+        .clue-blocked {
+        background-color: #f8d7da; /* Light red background */
+        color: #842029; /* Dark red text */
+        pointer-events: none; /* Disable interactions */
+        opacity: 0.7; /* Slightly fade blocked clues */
         }
         /* Solved states */
         .clue-box-container.clue-solved .clue-box-front { background-color: var(--clr-box-bg-solved); border-color: var(--clr-border-solved); color: var(--clr-text-on-solved); font-weight: 500; }
