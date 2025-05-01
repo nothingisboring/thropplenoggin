@@ -31,7 +31,40 @@
 
         // --- Event Handlers & Logic ---
         function handleBoxClick(event){ const container=event.currentTarget; if(gameComplete||phase3Active)return; const isPhase1Box=container.hasAttribute('data-clue-id'); const isPhase2Box=container.hasAttribute('data-phase2-clue-id'); let clueData; let canFlip=false; if(isPhase1Box&&!linkSolved&&!phase2Active){ clueData=gameData.getClueById(parseInt(container.dataset.clueId)); canFlip=clueData&&!clueData.solved; } else if(isPhase2Box&&phase2Active){ clueData=gameData.getPhase2ClueById(container.dataset.phase2ClueId); canFlip=clueData&&!clueData.solved; } if(!canFlip)return; if(container.classList.contains('is-flipped')){ if(event.target.tagName==='INPUT'||event.target.tagName==='BUTTON')return; container.classList.remove('is-flipped'); clearMessage(); } else { container.classList.add('is-flipped'); const input=container.querySelector('.clue-box-back input'); if(input)input.focus(); clearMessage(); } }
-        function handleClueSubmit(clueId){ if(linkSolved||gameComplete||phase2Active)return; const container=gridEl.querySelector(`.clue-box-container[data-clue-id='${clueId}']`); const input=container.querySelector('.clue-box-back input'); const front=container.querySelector('.clue-box-front'); const clueData=gameData.getClueById(clueId); const guess=input.value.trim(); if(!clueData||!guess||clueData.solved)return; const normalizedGuess=guess.toLowerCase().replace(/\s+/g, ' '); const normalizedSolution=clueData.solution.toLowerCase().replace(/\s+/g, ' '); if(normalizedGuess===normalizedSolution){ clueData.solved=true; solvedCluesCount++; front.textContent=clueData.solution; container.classList.add('clue-solved'); container.classList.remove('is-flipped'); input.value=''; input.disabled=true; container.querySelector('.clue-box-back button').disabled=true; displayMessage(`Clue ${clueId} solved!`, 'text-teal-600'); checkAllCluesSolved(); } else { input.classList.add('input-error'); displayMessage('Incorrect clue answer.', 'text-orange-600'); container.querySelector('.clue-box-inner').classList.add('shake'); setTimeout(()=>{ container.querySelector('.clue-box-inner').classList.remove('shake'); }, 500); } }
+        function handleClueSubmit(clueId) {
+    if (linkSolved || gameComplete || phase2Active) return;
+
+    const container = gridEl.querySelector(`.clue-box-container[data-clue-id='${clueId}']`);
+    const input = container.querySelector('input');
+    const clue = gameData.getClueById(clueId);
+
+    if (clue.solved || clue.attemptsLeft === 0) return;
+
+    const guess = input.value.trim().toLowerCase();
+    const normalizedSolution = clue.solution.toLowerCase();
+
+    if (guess === normalizedSolution) {
+        clue.solved = true;
+        solvedCluesCount++;
+        container.classList.add('clue-solved');
+        displayMessage('Correct!', 'text-teal-600');
+        checkAllCluesSolved();
+    } else {
+        clue.attemptsLeft--;
+        displayMessage('Incorrect. Try again.', 'text-red-600');
+        
+        // Update attempts left in UI
+        const attemptsIndicator = container.querySelector('.attempts-left');
+        attemptsIndicator.textContent = `Attempts Left: ${clue.attemptsLeft}`;
+
+        if (clue.attemptsLeft === 0) {
+            // Block and obscure the clue
+            input.disabled = true;
+            container.classList.add('clue-blocked');
+            displayMessage('No attempts left. Clue blocked.', 'text-red-600');
+        }
+    }
+}
         function checkAllCluesSolved(){ const linkInput=document.getElementById('missing-link-guess'); const linkButton=document.getElementById('submit-link'); if(solvedCluesCount===totalClues&&!linkSolved){ linkInput.disabled=false; linkButton.disabled=false; displayMessage('All Phase 1 clues solved! Guess the Missing Link?', 'text-teal-600'); linkInput.focus(); } else if(!linkSolved){ linkInput.disabled=true; linkButton.disabled=true; } }
         function handleLinkSubmit() {
             if (linkSolved || gameComplete) return;
