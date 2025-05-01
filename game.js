@@ -149,7 +149,7 @@
         function displayMessage(text, styleClasses='text-stone-700'){ messageAreaEl.textContent=text; messageAreaEl.className='h-10 mb-4 text-center font-medium'; if(styleClasses){ messageAreaEl.classList.add(...styleClasses.split(' ')); } if(gameComplete&&text.includes("Congratulations")){ messageAreaEl.classList.add('final-celebration'); } } // styleClasses now map to CSS rules using variables
         function clearMessage(){ const currentText=messageAreaEl.textContent||""; if(!currentText.includes("Phase")&&!currentText.includes("Link")&&!currentText.includes("Congratulations")){ messageAreaEl.textContent=''; messageAreaEl.className='h-10 mb-4 text-center font-medium'; messageAreaEl.style.color='var(--clr-text-default)';} }
 
-          document.addEventListener('DOMContentLoaded', () => {
+         document.addEventListener('DOMContentLoaded', () => {
     // --- Initialize Game ---
     initGame();
 
