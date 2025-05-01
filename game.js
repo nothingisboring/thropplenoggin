@@ -85,7 +85,38 @@
             }
         }
         function startPhase2(){ if(gameComplete||phase2Active)return; phase2Active=true; puzzleTitleEl.textContent="Phase 2: Solve the corner clues!"; displayMessage('Solve the four corner clues!', 'text-blue-600'); const phase2Boxes=gridEl.querySelectorAll('.clue-box-container[data-phase2-clue-id]'); phase2Boxes.forEach(box =>{ const phase2ClueId=box.dataset.phase2ClueId; const clueData=gameData.getPhase2ClueById(phase2ClueId); const frontElement=box.querySelector('.clue-box-front'); if(clueData&&frontElement){ frontElement.textContent=clueData.text; } box.classList.remove('phase2-inactive'); box.classList.add('phase2-active'); box.querySelector('.clue-box-inner').style.cursor='pointer'; }); const phase1Boxes=gridEl.querySelectorAll('.clue-box-container[data-clue-id]'); phase1Boxes.forEach(box =>{ box.querySelector('.clue-box-inner').style.cursor='default'; }); }
-        function handlePhase2ClueSubmit(phase2ClueId){ if(gameComplete||!phase2Active||phase3Active)return; const container=gridEl.querySelector(`.clue-box-container[data-phase2-clue-id='${phase2ClueId}']`); const input=container.querySelector('.clue-box-back input'); const front=container.querySelector('.clue-box-front'); const clueData=gameData.getPhase2ClueById(phase2ClueId); const guess=input.value.trim(); if(!clueData||!guess||clueData.solved)return; const normalizedGuess=guess.toLowerCase().replace(/\s+/g, ' '); const normalizedSolution=clueData.solution.toLowerCase().replace(/\s+/g, ' '); if(normalizedGuess===normalizedSolution){ clueData.solved=true; solvedPhase2Count++; front.textContent=clueData.solution; container.classList.add('clue-solved'); container.classList.remove('is-flipped'); input.value=''; input.disabled=true; container.querySelector('.clue-box-back button').disabled=true; container.querySelector('.clue-box-inner').style.cursor='default'; displayMessage(`Phase 2 Clue ${solvedPhase2Count}/${totalPhase2Clues} solved!`, 'text-teal-600'); if(solvedPhase2Count===totalPhase2Clues){ setTimeout(startPhase3, 1000); } } else { input.classList.add('input-error'); displayMessage('Incorrect Phase 2 answer.', 'text-orange-600'); container.querySelector('.clue-box-inner').classList.add('shake'); setTimeout(()=>{ container.querySelector('.clue-box-inner').classList.remove('shake'); }, 500); } }
+        function handlePhase2ClueSubmit(phase2ClueId) {
+    if (gameComplete || !phase2Active || phase3Active) return;
+
+    const container = gridEl.querySelector(`.clue-box-container[data-phase2-clue-id='${phase2ClueId}']`);
+    const input = container.querySelector('input');
+    const clue = gameData.getPhase2ClueById(phase2ClueId);
+
+    if (clue.solved || clue.attemptsLeft === 0) return;
+
+    const guess = input.value.trim().toLowerCase();
+    const normalizedSolution = clue.solution.toLowerCase();
+
+    if (guess === normalizedSolution) {
+        clue.solved = true;
+        solvedPhase2Count++;
+        container.classList.add('clue-solved');
+        displayMessage('Correct!', 'text-teal-600');
+        // Additional logic for Phase 2
+    } else {
+        clue.attemptsLeft--;
+        displayMessage('Incorrect. Try again.', 'text-red-600');
+
+        const attemptsIndicator = container.querySelector('.attempts-left');
+        attemptsIndicator.textContent = `Attempts Left: ${clue.attemptsLeft}`;
+
+        if (clue.attemptsLeft === 0) {
+            input.disabled = true;
+            container.classList.add('clue-blocked');
+            displayMessage('No attempts left. Clue blocked.', 'text-red-600');
+        }
+    }
+}
         function startPhase3(){ if(gameComplete||phase3Active)return; phase3Active=true; phase2Active=false; puzzleTitleEl.textContent="Phase 3: One final clue!"; displayMessage('The center holds one final clue!', 'text-purple-600'); const centerBox=document.getElementById('missing-link-center-box'); centerBox.innerHTML=''; centerBox.classList.add('center-glow', 'phase3-active'); centerBox.style.backgroundColor=''; const phase3ClueEl=document.createElement('div'); phase3ClueEl.classList.add('phase3-clue'); phase3ClueEl.textContent=gameData.phase3Clue; centerBox.appendChild(phase3ClueEl); const formContainer=document.createElement('div'); formContainer.style.cssText='display: flex; flex-direction: column; align-items: center; width: 100%; gap: 6px;'; const phase3Input=document.createElement('input'); phase3Input.type='text'; phase3Input.id='phase3-guess'; phase3Input.placeholder='Final answer...'; phase3Input.addEventListener('keydown', (e)=>{ if(e.key==='Enter')handlePhase3Submit(); phase3Input.classList.remove('input-error'); }); const phase3Button=document.createElement('button'); phase3Button.id='submit-phase3'; phase3Button.textContent='Submit Final Answer'; phase3Button.addEventListener('click', handlePhase3Submit); formContainer.appendChild(phase3Input); formContainer.appendChild(phase3Button); centerBox.appendChild(formContainer); const phase2Boxes=gridEl.querySelectorAll('.clue-box-container[data-phase2-clue-id]'); phase2Boxes.forEach(box =>{ box.classList.remove('phase2-active'); box.querySelector('.clue-box-inner').style.cursor='default'; if(!box.classList.contains('clue-solved')){ box.style.opacity='0.7'; } }); phase3Input.focus(); }
         function handlePhase3Submit(){ if(gameComplete||!phase3Active)return; const phase3Input=document.getElementById('phase3-guess'); const guess=phase3Input.value.trim(); if(!guess)return; const normalizedGuess=guess.toLowerCase().replace(/\s+/g, ' '); const normalizedSolution=gameData.phase3Solution.toLowerCase().replace(/\s+/g, ' '); if(normalizedGuess===normalizedSolution){ phase3Solved=true; gameComplete=true; phase3Active=false; const centerBox=document.getElementById('missing-link-center-box'); centerBox.classList.remove('center-glow', 'phase3-active'); centerBox.classList.add('final-solved'); centerBox.innerHTML=''; const finalSolutionText=document.createElement('div'); finalSolutionText.classList.add('phase3-solution'); finalSolutionText.textContent=gameData.phase3Solution; centerBox.appendChild(finalSolutionText); gridEl.querySelectorAll('input, button').forEach(el => el.disabled=true); gridEl.style.pointerEvents='none'; setTimeout(endGameCelebration, 500); } else { phase3Input.classList.add('input-error'); displayMessage('Incorrect final answer. Try again.', 'text-orange-600'); const centerBox=document.getElementById('missing-link-center-box'); centerBox.classList.add('shake'); setTimeout(()=>{ centerBox.classList.remove('shake'); }, 500); } }
 
