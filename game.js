@@ -8,18 +8,41 @@
         const gridEl = document.getElementById('missing-link-grid'), messageAreaEl = document.getElementById('message-area'), emojiIndicatorEl = document.getElementById('source-type-emoji'), puzzleTitleEl = document.getElementById('puzzle-title'), solutionsModalContainerEl = document.getElementById('solutions-modal-container');
 
         // --- Initialization ---
-        function initGame() {
-            // *** Reset Theme ***
-            document.body.classList.remove('mondrian-theme');
-            // ******************
+       function initGame() {
+    document.body.classList.remove('mondrian-theme'); // Reset Theme
 
-            gridEl.innerHTML = ''; solvedCluesCount = 0; linkSolved = false; phase2Active = false; solvedPhase2Count = 0; phase3Active = false; phase3Solved = false; gameComplete = false; messageAreaEl.textContent = ''; puzzleTitleEl.textContent = ''; emojiIndicatorEl.textContent = gameData.sourceTypeEmoji || ''; solutionsModalContainerEl.innerHTML = '';
-            gameData.clues.forEach(clue => clue.solved = false); clue.attemptsLeft = 2; gameData.phase2Clues.forEach(clue => clue.solved = false); clue.attemptsLeft = 2
-            gameData.clues.forEach(clueData => gridEl.appendChild(createPhase1ClueBox(clueData)));
-            gridEl.appendChild(createCenterBox()); gameData.phase2Clues.forEach(p2Data => gridEl.appendChild(createPhase2ClueBox(p2Data)));
-            checkAllCluesSolved();
-            messageAreaEl.style.color = 'var(--clr-text-default)'; // Ensure message area resets color
-        }
+    // Reset game state
+    gridEl.innerHTML = '';
+    solvedCluesCount = 0;
+    linkSolved = false;
+    phase2Active = false;
+    solvedPhase2Count = 0;
+    phase3Active = false;
+    phase3Solved = false;
+    gameComplete = false;
+    messageAreaEl.textContent = ''; // Clear messages
+
+    // Reset clues and attempts
+    gameData.clues.forEach(clue => {
+        clue.solved = false;
+        clue.attemptsLeft = 2; // Initialize attempts
+    });
+
+    gameData.phase2Clues.forEach(clue => {
+        clue.solved = false;
+        clue.attemptsLeft = 2; // Initialize attempts
+    });
+
+    // Create game elements
+    gameData.clues.forEach(clueData => gridEl.appendChild(createPhase1ClueBox(clueData)));
+    gridEl.appendChild(createCenterBox());
+    gameData.phase2Clues.forEach(p2Data => gridEl.appendChild(createPhase2ClueBox(p2Data)));
+
+    checkAllCluesSolved();
+
+    // Reset message area color
+    messageAreaEl.style.color = 'var(--clr-text-default)';
+}
 
         // --- Element Creation Functions --- (No changes)
         function createPhase1ClueBox(clueData){ const container=document.createElement('div'); container.classList.add('clue-box-container'); container.dataset.clueId=clueData.id; const attemptsIndicator = document.createElement('div'); attemptsIndicator.classList.add('attempts-left'); attemptsIndicator.textContent = `Attempts Left: ${clueData.attemptsLeft}`; container.appendChild(attemptsIndicator); const {inner, front, back}=createClueBoxInnerStructure(clueData.text); const input=createClueInput(); input.addEventListener('keydown', (e)=>{ if(e.key==='Enter')handleClueSubmit(clueData.id); input.classList.remove('input-error'); }); const button=createClueButton('Submit'); button.addEventListener('click', (e)=>{ e.stopPropagation(); handleClueSubmit(clueData.id); }); back.appendChild(input); back.appendChild(button); inner.appendChild(front); inner.appendChild(back); container.appendChild(inner); container.addEventListener('click', handleBoxClick); return container; }
