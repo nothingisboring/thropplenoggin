@@ -290,7 +290,12 @@
         margin-top: 4px;
         text-align: center;
         }
-
+        .clue-box-container.clue-blocked {
+        background-color: var(--clr-error-bg);
+        border-color: var(--clr-error);
+        opacity: 0.6;
+        pointer-events: none;
+        }
         /* Solved states */
         .clue-box-container.clue-solved .clue-box-front { background-color: var(--clr-box-bg-solved); border-color: var(--clr-border-solved); color: var(--clr-text-on-solved); font-weight: 500; }
         .clue-box-container.clue-solved .clue-box-inner { cursor: default; }
