@@ -8,7 +8,7 @@
         const gridEl = document.getElementById('missing-link-grid'), messageAreaEl = document.getElementById('message-area'), emojiIndicatorEl = document.getElementById('source-type-emoji'), puzzleTitleEl = document.getElementById('puzzle-title'), solutionsModalContainerEl = document.getElementById('solutions-modal-container');
 
         // --- Initialization ---
-       function initGame() {
+      function initGame() {
     document.body.classList.remove('mondrian-theme'); // Reset Theme
 
     // Reset game state
@@ -25,12 +25,14 @@
     // Reset clues and attempts
     gameData.clues.forEach(clue => {
         clue.solved = false;
-        clue.attemptsLeft = 2; // Initialize attempts
+        clue.attempts = 0; // Reset attempts
+        clue.blocked = false; // Reset blocked state
     });
 
     gameData.phase2Clues.forEach(clue => {
         clue.solved = false;
-        clue.attemptsLeft = 2; // Initialize attempts
+        clue.attempts = 0; // Reset attempts
+        clue.blocked = false; // Reset blocked state
     });
 
     // Create game elements
@@ -55,39 +57,69 @@
         // --- Event Handlers & Logic ---
         function handleBoxClick(event){ const container=event.currentTarget; if(gameComplete||phase3Active)return; const isPhase1Box=container.hasAttribute('data-clue-id'); const isPhase2Box=container.hasAttribute('data-phase2-clue-id'); let clueData; let canFlip=false; if(isPhase1Box&&!linkSolved&&!phase2Active){ clueData=gameData.getClueById(parseInt(container.dataset.clueId)); canFlip=clueData&&!clueData.solved; } else if(isPhase2Box&&phase2Active){ clueData=gameData.getPhase2ClueById(container.dataset.phase2ClueId); canFlip=clueData&&!clueData.solved; } if(!canFlip)return; if(container.classList.contains('is-flipped')){ if(event.target.tagName==='INPUT'||event.target.tagName==='BUTTON')return; container.classList.remove('is-flipped'); clearMessage(); } else { container.classList.add('is-flipped'); const input=container.querySelector('.clue-box-back input'); if(input)input.focus(); clearMessage(); } }
         function handleClueSubmit(clueId) {
-    if (linkSolved || gameComplete || phase2Active) return;
+    if (linkSolved || gameComplete || phase2Active) return; // Lock after link is solved or in Phase 2
 
     const container = gridEl.querySelector(`.clue-box-container[data-clue-id='${clueId}']`);
-    const input = container.querySelector('input');
-    const clue = gameData.getClueById(clueId);
+    const input = container.querySelector('.clue-box-back input');
+    const front = container.querySelector('.clue-box-front');
+    const clueData = gameData.getClueById(clueId);
+    const guess = input.value.trim();
 
-    if (clue.solved || clue.attemptsLeft === 0) return;
+    if (!clueData || !guess || clueData.solved) return;
 
-    const guess = input.value.trim().toLowerCase();
-    const normalizedSolution = clue.solution.toLowerCase();
+    const normalizedGuess = guess.toLowerCase().replace(/\s+/g, ' ');
+    const normalizedSolution = clueData.solution.toLowerCase().replace(/\s+/g, ' ');
 
-    if (guess === normalizedSolution) {
-        clue.solved = true;
-        solvedCluesCount++;
+    // Check if the answer is correct
+    if (normalizedGuess === normalizedSolution) {
+        clueData.solved = true;
+        solvedCluesCount++; // Increment count
+        front.textContent = clueData.solution; // Show solution on the front
         container.classList.add('clue-solved');
-        displayMessage('Correct!', 'text-teal-600');
-        checkAllCluesSolved();
-    } else {
-        clue.attemptsLeft--;
-        displayMessage('Incorrect. Try again.', 'text-red-600');
-        
-        // Update attempts left in UI
-        const attemptsIndicator = container.querySelector('.attempts-left');
-        attemptsIndicator.textContent = `Attempts Left: ${clue.attemptsLeft}`;
+        container.classList.remove('is-flipped');
+        input.value = ''; // Clear input
+        input.disabled = true;
+        container.querySelector('.clue-box-back button').disabled = true;
+        displayMessage(`Clue solved! (${solvedCluesCount}/${totalClues})`, 'text-teal-600');
 
-        if (clue.attemptsLeft === 0) {
-            // Block and obscure the clue
-            input.disabled = true;
-            container.classList.add('clue-blocked');
-            displayMessage('No attempts left. Clue blocked.', 'text-red-600');
+        // Check if enough clues are solved to enable the link input
+        checkClueCountForLink();
+
+    } else {
+        // Increment the attempts counter
+        clueData.attempts = (clueData.attempts || 0) + 1; // Initialize if undefined
+        input.classList.add('input-error');
+        displayMessage('Incorrect clue answer.', 'text-orange-600');
+        container.querySelector('.clue-box-inner').classList.add('shake');
+        setTimeout(() => { container.querySelector('.clue-box-inner').classList.remove('shake'); }, 500);
+
+        // If the player has used up 2 attempts, block and obscure the clue
+        if (clueData.attempts >= 2) {
+            blockAndObscureClue(container, front, clueData);
         }
     }
 }
+
+function blockAndObscureClue(container, front, clueData) {
+    // Mark the clue as blocked
+    clueData.blocked = true; // Prevent further interaction
+
+    // Obscure the clue visually
+    front.textContent = "❌ Blocked";
+    container.classList.add('clue-blocked'); // Add a class for styling
+    container.classList.remove('is-flipped');
+
+    // Disable input and button
+    const input = container.querySelector('.clue-box-back input');
+    const button = container.querySelector('.clue-box-back button');
+    input.value = ''; // Clear input
+    input.disabled = true;
+    button.disabled = true;
+
+    // Display a message
+    displayMessage('Clue blocked after 2 incorrect attempts.', 'text-red-600');
+}
+
         function checkAllCluesSolved(){ const linkInput=document.getElementById('missing-link-guess'); const linkButton=document.getElementById('submit-link'); if(solvedCluesCount===totalClues&&!linkSolved){ linkInput.disabled=false; linkButton.disabled=false; displayMessage('All Phase 1 clues solved! Guess the Missing Link?', 'text-teal-600'); linkInput.focus(); } else if(!linkSolved){ linkInput.disabled=true; linkButton.disabled=true; } }
         function handleLinkSubmit() {
             if (linkSolved || gameComplete) return;
@@ -108,35 +140,43 @@
             }
         }
         function startPhase2(){ if(gameComplete||phase2Active)return; phase2Active=true; puzzleTitleEl.textContent="Phase 2: Solve the corner clues!"; displayMessage('Solve the four corner clues!', 'text-blue-600'); const phase2Boxes=gridEl.querySelectorAll('.clue-box-container[data-phase2-clue-id]'); phase2Boxes.forEach(box =>{ const phase2ClueId=box.dataset.phase2ClueId; const clueData=gameData.getPhase2ClueById(phase2ClueId); const frontElement=box.querySelector('.clue-box-front'); if(clueData&&frontElement){ frontElement.textContent=clueData.text; } box.classList.remove('phase2-inactive'); box.classList.add('phase2-active'); box.querySelector('.clue-box-inner').style.cursor='pointer'; }); const phase1Boxes=gridEl.querySelectorAll('.clue-box-container[data-clue-id]'); phase1Boxes.forEach(box =>{ box.querySelector('.clue-box-inner').style.cursor='default'; }); }
-        function handlePhase2ClueSubmit(phase2ClueId) {
+       function handlePhase2ClueSubmit(phase2ClueId) {
     if (gameComplete || !phase2Active || phase3Active) return;
 
     const container = gridEl.querySelector(`.clue-box-container[data-phase2-clue-id='${phase2ClueId}']`);
-    const input = container.querySelector('input');
-    const clue = gameData.getPhase2ClueById(phase2ClueId);
+    const input = container.querySelector('.clue-box-back input');
+    const front = container.querySelector('.clue-box-front');
+    const clueData = gameData.getPhase2ClueById(phase2ClueId);
+    const guess = input.value.trim();
 
-    if (clue.solved || clue.attemptsLeft === 0) return;
+    if (!clueData || !guess || clueData.solved) return;
 
-    const guess = input.value.trim().toLowerCase();
-    const normalizedSolution = clue.solution.toLowerCase();
+    const normalizedGuess = guess.toLowerCase().replace(/\s+/g, ' ');
+    const normalizedSolution = clueData.solution.toLowerCase().replace(/\s+/g, ' ');
 
-    if (guess === normalizedSolution) {
-        clue.solved = true;
-        solvedPhase2Count++;
+    // Check if the answer is correct
+    if (normalizedGuess === normalizedSolution) {
+        clueData.solved = true;
+        solvedPhase2Count++; // Increment count
+        front.textContent = clueData.solution; // Show solution on the front
         container.classList.add('clue-solved');
-        displayMessage('Correct!', 'text-teal-600');
-        // Additional logic for Phase 2
+        container.classList.remove('is-flipped');
+        input.value = '';
+        input.disabled = true;
+        container.querySelector('.clue-box-back button').disabled = true;
+        displayMessage(`Phase 2 clue solved! (${solvedPhase2Count}/${totalPhase2Clues})`, 'text-teal-600');
+
     } else {
-        clue.attemptsLeft--;
-        displayMessage('Incorrect. Try again.', 'text-red-600');
+        // Increment the attempts counter
+        clueData.attempts = (clueData.attempts || 0) + 1; // Initialize if undefined
+        input.classList.add('input-error');
+        displayMessage('Incorrect Phase 2 clue answer.', 'text-orange-600');
+        container.querySelector('.clue-box-inner').classList.add('shake');
+        setTimeout(() => { container.querySelector('.clue-box-inner').classList.remove('shake'); }, 500);
 
-        const attemptsIndicator = container.querySelector('.attempts-left');
-        attemptsIndicator.textContent = `Attempts Left: ${clue.attemptsLeft}`;
-
-        if (clue.attemptsLeft === 0) {
-            input.disabled = true;
-            container.classList.add('clue-blocked');
-            displayMessage('No attempts left. Clue blocked.', 'text-red-600');
+        // If the player has used up 2 attempts, block and obscure the clue
+        if (clueData.attempts >= 2) {
+            blockAndObscureClue(container, front, clueData);
         }
     }
 }
