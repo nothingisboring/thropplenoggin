@@ -283,6 +283,13 @@
          }
         .clue-box-back button:hover:not(:disabled) { background-color: var(--clr-primary-hover); }
          .clue-box-back button:disabled { background-color: var(--clr-primary-disabled); cursor: not-allowed; }
+        
+        .attempts-left {
+        font-size: 0.8rem;
+        color: var(--clr-text-muted);
+        margin-top: 4px;
+        text-align: center;
+        }
 
         /* Solved states */
         .clue-box-container.clue-solved .clue-box-front { background-color: var(--clr-box-bg-solved); border-color: var(--clr-border-solved); color: var(--clr-text-on-solved); font-weight: 500; }
