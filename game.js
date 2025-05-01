@@ -8,46 +8,21 @@
         const gridEl = document.getElementById('missing-link-grid'), messageAreaEl = document.getElementById('message-area'), emojiIndicatorEl = document.getElementById('source-type-emoji'), puzzleTitleEl = document.getElementById('puzzle-title'), solutionsModalContainerEl = document.getElementById('solutions-modal-container');
 
         // --- Initialization ---
-      function initGame() {
-    document.body.classList.remove('mondrian-theme'); // Reset Theme
+        function initGame() {
+            // *** Reset Theme ***
+            document.body.classList.remove('mondrian-theme');
+            // ******************
 
-    // Reset game state
-    gridEl.innerHTML = '';
-    solvedCluesCount = 0;
-    linkSolved = false;
-    phase2Active = false;
-    solvedPhase2Count = 0;
-    phase3Active = false;
-    phase3Solved = false;
-    gameComplete = false;
-    messageAreaEl.textContent = ''; // Clear messages
-
-    // Reset clues and attempts
-    gameData.clues.forEach(clue => {
-        clue.solved = false;
-        clue.attempts = 0; // Reset attempts
-        clue.blocked = false; // Reset blocked state
-    });
-
-    gameData.phase2Clues.forEach(clue => {
-        clue.solved = false;
-        clue.attempts = 0; // Reset attempts
-        clue.blocked = false; // Reset blocked state
-    });
-
-    // Create game elements
-    gameData.clues.forEach(clueData => gridEl.appendChild(createPhase1ClueBox(clueData)));
-    gridEl.appendChild(createCenterBox());
-    gameData.phase2Clues.forEach(p2Data => gridEl.appendChild(createPhase2ClueBox(p2Data)));
-
-    checkAllCluesSolved();
-
-    // Reset message area color
-    messageAreaEl.style.color = 'var(--clr-text-default)';
-}
+            gridEl.innerHTML = ''; solvedCluesCount = 0; linkSolved = false; phase2Active = false; solvedPhase2Count = 0; phase3Active = false; phase3Solved = false; gameComplete = false; messageAreaEl.textContent = ''; puzzleTitleEl.textContent = ''; emojiIndicatorEl.textContent = gameData.sourceTypeEmoji || ''; solutionsModalContainerEl.innerHTML = '';
+            gameData.clues.forEach(clue => clue.solved = false); gameData.phase2Clues.forEach(clue => clue.solved = false);
+            gameData.clues.forEach(clueData => gridEl.appendChild(createPhase1ClueBox(clueData)));
+            gridEl.appendChild(createCenterBox()); gameData.phase2Clues.forEach(p2Data => gridEl.appendChild(createPhase2ClueBox(p2Data)));
+            checkAllCluesSolved();
+            messageAreaEl.style.color = 'var(--clr-text-default)'; // Ensure message area resets color
+        }
 
         // --- Element Creation Functions --- (No changes)
-        function createPhase1ClueBox(clueData){ const container=document.createElement('div'); container.classList.add('clue-box-container'); container.dataset.clueId=clueData.id; const attemptsIndicator = document.createElement('div'); attemptsIndicator.classList.add('attempts-left'); attemptsIndicator.textContent = `Attempts Left: ${clueData.attemptsLeft}`; container.appendChild(attemptsIndicator); const {inner, front, back}=createClueBoxInnerStructure(clueData.text); const input=createClueInput(); input.addEventListener('keydown', (e)=>{ if(e.key==='Enter')handleClueSubmit(clueData.id); input.classList.remove('input-error'); }); const button=createClueButton('Submit'); button.addEventListener('click', (e)=>{ e.stopPropagation(); handleClueSubmit(clueData.id); }); back.appendChild(input); back.appendChild(button); inner.appendChild(front); inner.appendChild(back); container.appendChild(inner); container.addEventListener('click', handleBoxClick); return container; }
+        function createPhase1ClueBox(clueData){ const container=document.createElement('div'); container.classList.add('clue-box-container'); container.dataset.clueId=clueData.id; const {inner, front, back}=createClueBoxInnerStructure(clueData.text); const input=createClueInput(); input.addEventListener('keydown', (e)=>{ if(e.key==='Enter')handleClueSubmit(clueData.id); input.classList.remove('input-error'); }); const button=createClueButton('Submit'); button.addEventListener('click', (e)=>{ e.stopPropagation(); handleClueSubmit(clueData.id); }); back.appendChild(input); back.appendChild(button); inner.appendChild(front); inner.appendChild(back); container.appendChild(inner); container.addEventListener('click', handleBoxClick); return container; }
         function createPhase2ClueBox(p2Data){ const container=document.createElement('div'); container.classList.add('clue-box-container', 'phase2-inactive'); container.dataset.phase2ClueId=p2Data.id; container.style.gridColumn=`${p2Data.gridPos[1]} / span 1`; container.style.gridRow=`${p2Data.gridPos[0]} / span 1`; const {inner, front, back}=createClueBoxInnerStructure("?"); const input=createClueInput(); input.addEventListener('keydown', (e)=>{ if(e.key==='Enter')handlePhase2ClueSubmit(p2Data.id); input.classList.remove('input-error'); }); const button=createClueButton('Submit'); button.addEventListener('click', (e)=>{ e.stopPropagation(); handlePhase2ClueSubmit(p2Data.id); }); back.appendChild(input); back.appendChild(button); inner.appendChild(front); inner.appendChild(back); container.appendChild(inner); container.addEventListener('click', handleBoxClick); return container; }
         function createClueBoxInnerStructure(clueText){ const inner=document.createElement('div'); inner.classList.add('clue-box-inner'); const front=document.createElement('div'); front.classList.add('clue-box-front'); front.textContent=clueText; const back=document.createElement('div'); back.classList.add('clue-box-back'); return {inner, front, back}; }
         function createClueInput(){ const input=document.createElement('input'); input.type='text'; input.placeholder='Your answer...'; return input; }
@@ -56,70 +31,7 @@
 
         // --- Event Handlers & Logic ---
         function handleBoxClick(event){ const container=event.currentTarget; if(gameComplete||phase3Active)return; const isPhase1Box=container.hasAttribute('data-clue-id'); const isPhase2Box=container.hasAttribute('data-phase2-clue-id'); let clueData; let canFlip=false; if(isPhase1Box&&!linkSolved&&!phase2Active){ clueData=gameData.getClueById(parseInt(container.dataset.clueId)); canFlip=clueData&&!clueData.solved; } else if(isPhase2Box&&phase2Active){ clueData=gameData.getPhase2ClueById(container.dataset.phase2ClueId); canFlip=clueData&&!clueData.solved; } if(!canFlip)return; if(container.classList.contains('is-flipped')){ if(event.target.tagName==='INPUT'||event.target.tagName==='BUTTON')return; container.classList.remove('is-flipped'); clearMessage(); } else { container.classList.add('is-flipped'); const input=container.querySelector('.clue-box-back input'); if(input)input.focus(); clearMessage(); } }
-        function handleClueSubmit(clueId) {
-    if (linkSolved || gameComplete || phase2Active) return; // Lock after link is solved or in Phase 2
-
-    const container = gridEl.querySelector(`.clue-box-container[data-clue-id='${clueId}']`);
-    const input = container.querySelector('.clue-box-back input');
-    const front = container.querySelector('.clue-box-front');
-    const clueData = gameData.getClueById(clueId);
-    const guess = input.value.trim();
-
-    if (!clueData || !guess || clueData.solved) return;
-
-    const normalizedGuess = guess.toLowerCase().replace(/\s+/g, ' ');
-    const normalizedSolution = clueData.solution.toLowerCase().replace(/\s+/g, ' ');
-
-    // Check if the answer is correct
-    if (normalizedGuess === normalizedSolution) {
-        clueData.solved = true;
-        solvedCluesCount++; // Increment count
-        front.textContent = clueData.solution; // Show solution on the front
-        container.classList.add('clue-solved');
-        container.classList.remove('is-flipped');
-        input.value = ''; // Clear input
-        input.disabled = true;
-        container.querySelector('.clue-box-back button').disabled = true;
-        displayMessage(`Clue solved! (${solvedCluesCount}/${totalClues})`, 'text-teal-600');
-
-        // Check if enough clues are solved to enable the link input
-        checkClueCountForLink();
-
-    } else {
-        // Increment the attempts counter
-        clueData.attempts = (clueData.attempts || 0) + 1; // Initialize if undefined
-        input.classList.add('input-error');
-        displayMessage('Incorrect clue answer.', 'text-orange-600');
-        container.querySelector('.clue-box-inner').classList.add('shake');
-        setTimeout(() => { container.querySelector('.clue-box-inner').classList.remove('shake'); }, 500);
-
-        // If the player has used up 2 attempts, block and obscure the clue
-        if (clueData.attempts >= 2) {
-            blockAndObscureClue(container, front, clueData);
-        }
-    }
-}
-
-function blockAndObscureClue(container, front, clueData) {
-    // Mark the clue as blocked
-    clueData.blocked = true; // Prevent further interaction
-
-    // Obscure the clue visually
-    front.textContent = "❌ Blocked";
-    container.classList.add('clue-blocked'); // Add a class for styling
-    container.classList.remove('is-flipped');
-
-    // Disable input and button
-    const input = container.querySelector('.clue-box-back input');
-    const button = container.querySelector('.clue-box-back button');
-    input.value = ''; // Clear input
-    input.disabled = true;
-    button.disabled = true;
-
-    // Display a message
-    displayMessage('Clue blocked after 2 incorrect attempts.', 'text-red-600');
-}
-
+        function handleClueSubmit(clueId){ if(linkSolved||gameComplete||phase2Active)return; const container=gridEl.querySelector(`.clue-box-container[data-clue-id='${clueId}']`); const input=container.querySelector('.clue-box-back input'); const front=container.querySelector('.clue-box-front'); const clueData=gameData.getClueById(clueId); const guess=input.value.trim(); if(!clueData||!guess||clueData.solved)return; const normalizedGuess=guess.toLowerCase().replace(/\s+/g, ' '); const normalizedSolution=clueData.solution.toLowerCase().replace(/\s+/g, ' '); if(normalizedGuess===normalizedSolution){ clueData.solved=true; solvedCluesCount++; front.textContent=clueData.solution; container.classList.add('clue-solved'); container.classList.remove('is-flipped'); input.value=''; input.disabled=true; container.querySelector('.clue-box-back button').disabled=true; displayMessage(`Clue ${clueId} solved!`, 'text-teal-600'); checkAllCluesSolved(); } else { input.classList.add('input-error'); displayMessage('Incorrect clue answer.', 'text-orange-600'); container.querySelector('.clue-box-inner').classList.add('shake'); setTimeout(()=>{ container.querySelector('.clue-box-inner').classList.remove('shake'); }, 500); } }
         function checkAllCluesSolved(){ const linkInput=document.getElementById('missing-link-guess'); const linkButton=document.getElementById('submit-link'); if(solvedCluesCount===totalClues&&!linkSolved){ linkInput.disabled=false; linkButton.disabled=false; displayMessage('All Phase 1 clues solved! Guess the Missing Link?', 'text-teal-600'); linkInput.focus(); } else if(!linkSolved){ linkInput.disabled=true; linkButton.disabled=true; } }
         function handleLinkSubmit() {
             if (linkSolved || gameComplete) return;
@@ -140,46 +52,7 @@ function blockAndObscureClue(container, front, clueData) {
             }
         }
         function startPhase2(){ if(gameComplete||phase2Active)return; phase2Active=true; puzzleTitleEl.textContent="Phase 2: Solve the corner clues!"; displayMessage('Solve the four corner clues!', 'text-blue-600'); const phase2Boxes=gridEl.querySelectorAll('.clue-box-container[data-phase2-clue-id]'); phase2Boxes.forEach(box =>{ const phase2ClueId=box.dataset.phase2ClueId; const clueData=gameData.getPhase2ClueById(phase2ClueId); const frontElement=box.querySelector('.clue-box-front'); if(clueData&&frontElement){ frontElement.textContent=clueData.text; } box.classList.remove('phase2-inactive'); box.classList.add('phase2-active'); box.querySelector('.clue-box-inner').style.cursor='pointer'; }); const phase1Boxes=gridEl.querySelectorAll('.clue-box-container[data-clue-id]'); phase1Boxes.forEach(box =>{ box.querySelector('.clue-box-inner').style.cursor='default'; }); }
-       function handlePhase2ClueSubmit(phase2ClueId) {
-    if (gameComplete || !phase2Active || phase3Active) return;
-
-    const container = gridEl.querySelector(`.clue-box-container[data-phase2-clue-id='${phase2ClueId}']`);
-    const input = container.querySelector('.clue-box-back input');
-    const front = container.querySelector('.clue-box-front');
-    const clueData = gameData.getPhase2ClueById(phase2ClueId);
-    const guess = input.value.trim();
-
-    if (!clueData || !guess || clueData.solved) return;
-
-    const normalizedGuess = guess.toLowerCase().replace(/\s+/g, ' ');
-    const normalizedSolution = clueData.solution.toLowerCase().replace(/\s+/g, ' ');
-
-    // Check if the answer is correct
-    if (normalizedGuess === normalizedSolution) {
-        clueData.solved = true;
-        solvedPhase2Count++; // Increment count
-        front.textContent = clueData.solution; // Show solution on the front
-        container.classList.add('clue-solved');
-        container.classList.remove('is-flipped');
-        input.value = '';
-        input.disabled = true;
-        container.querySelector('.clue-box-back button').disabled = true;
-        displayMessage(`Phase 2 clue solved! (${solvedPhase2Count}/${totalPhase2Clues})`, 'text-teal-600');
-
-    } else {
-        // Increment the attempts counter
-        clueData.attempts = (clueData.attempts || 0) + 1; // Initialize if undefined
-        input.classList.add('input-error');
-        displayMessage('Incorrect Phase 2 clue answer.', 'text-orange-600');
-        container.querySelector('.clue-box-inner').classList.add('shake');
-        setTimeout(() => { container.querySelector('.clue-box-inner').classList.remove('shake'); }, 500);
-
-        // If the player has used up 2 attempts, block and obscure the clue
-        if (clueData.attempts >= 2) {
-            blockAndObscureClue(container, front, clueData);
-        }
-    }
-}
+        function handlePhase2ClueSubmit(phase2ClueId){ if(gameComplete||!phase2Active||phase3Active)return; const container=gridEl.querySelector(`.clue-box-container[data-phase2-clue-id='${phase2ClueId}']`); const input=container.querySelector('.clue-box-back input'); const front=container.querySelector('.clue-box-front'); const clueData=gameData.getPhase2ClueById(phase2ClueId); const guess=input.value.trim(); if(!clueData||!guess||clueData.solved)return; const normalizedGuess=guess.toLowerCase().replace(/\s+/g, ' '); const normalizedSolution=clueData.solution.toLowerCase().replace(/\s+/g, ' '); if(normalizedGuess===normalizedSolution){ clueData.solved=true; solvedPhase2Count++; front.textContent=clueData.solution; container.classList.add('clue-solved'); container.classList.remove('is-flipped'); input.value=''; input.disabled=true; container.querySelector('.clue-box-back button').disabled=true; container.querySelector('.clue-box-inner').style.cursor='default'; displayMessage(`Phase 2 Clue ${solvedPhase2Count}/${totalPhase2Clues} solved!`, 'text-teal-600'); if(solvedPhase2Count===totalPhase2Clues){ setTimeout(startPhase3, 1000); } } else { input.classList.add('input-error'); displayMessage('Incorrect Phase 2 answer.', 'text-orange-600'); container.querySelector('.clue-box-inner').classList.add('shake'); setTimeout(()=>{ container.querySelector('.clue-box-inner').classList.remove('shake'); }, 500); } }
         function startPhase3(){ if(gameComplete||phase3Active)return; phase3Active=true; phase2Active=false; puzzleTitleEl.textContent="Phase 3: One final clue!"; displayMessage('The center holds one final clue!', 'text-purple-600'); const centerBox=document.getElementById('missing-link-center-box'); centerBox.innerHTML=''; centerBox.classList.add('center-glow', 'phase3-active'); centerBox.style.backgroundColor=''; const phase3ClueEl=document.createElement('div'); phase3ClueEl.classList.add('phase3-clue'); phase3ClueEl.textContent=gameData.phase3Clue; centerBox.appendChild(phase3ClueEl); const formContainer=document.createElement('div'); formContainer.style.cssText='display: flex; flex-direction: column; align-items: center; width: 100%; gap: 6px;'; const phase3Input=document.createElement('input'); phase3Input.type='text'; phase3Input.id='phase3-guess'; phase3Input.placeholder='Final answer...'; phase3Input.addEventListener('keydown', (e)=>{ if(e.key==='Enter')handlePhase3Submit(); phase3Input.classList.remove('input-error'); }); const phase3Button=document.createElement('button'); phase3Button.id='submit-phase3'; phase3Button.textContent='Submit Final Answer'; phase3Button.addEventListener('click', handlePhase3Submit); formContainer.appendChild(phase3Input); formContainer.appendChild(phase3Button); centerBox.appendChild(formContainer); const phase2Boxes=gridEl.querySelectorAll('.clue-box-container[data-phase2-clue-id]'); phase2Boxes.forEach(box =>{ box.classList.remove('phase2-active'); box.querySelector('.clue-box-inner').style.cursor='default'; if(!box.classList.contains('clue-solved')){ box.style.opacity='0.7'; } }); phase3Input.focus(); }
         function handlePhase3Submit(){ if(gameComplete||!phase3Active)return; const phase3Input=document.getElementById('phase3-guess'); const guess=phase3Input.value.trim(); if(!guess)return; const normalizedGuess=guess.toLowerCase().replace(/\s+/g, ' '); const normalizedSolution=gameData.phase3Solution.toLowerCase().replace(/\s+/g, ' '); if(normalizedGuess===normalizedSolution){ phase3Solved=true; gameComplete=true; phase3Active=false; const centerBox=document.getElementById('missing-link-center-box'); centerBox.classList.remove('center-glow', 'phase3-active'); centerBox.classList.add('final-solved'); centerBox.innerHTML=''; const finalSolutionText=document.createElement('div'); finalSolutionText.classList.add('phase3-solution'); finalSolutionText.textContent=gameData.phase3Solution; centerBox.appendChild(finalSolutionText); gridEl.querySelectorAll('input, button').forEach(el => el.disabled=true); gridEl.style.pointerEvents='none'; setTimeout(endGameCelebration, 500); } else { phase3Input.classList.add('input-error'); displayMessage('Incorrect final answer. Try again.', 'text-orange-600'); const centerBox=document.getElementById('missing-link-center-box'); centerBox.classList.add('shake'); setTimeout(()=>{ centerBox.classList.remove('shake'); }, 500); } }
 
@@ -189,7 +62,7 @@ function blockAndObscureClue(container, front, clueData) {
         function displayMessage(text, styleClasses='text-stone-700'){ messageAreaEl.textContent=text; messageAreaEl.className='h-10 mb-4 text-center font-medium'; if(styleClasses){ messageAreaEl.classList.add(...styleClasses.split(' ')); } if(gameComplete&&text.includes("Congratulations")){ messageAreaEl.classList.add('final-celebration'); } } // styleClasses now map to CSS rules using variables
         function clearMessage(){ const currentText=messageAreaEl.textContent||""; if(!currentText.includes("Phase")&&!currentText.includes("Link")&&!currentText.includes("Congratulations")){ messageAreaEl.textContent=''; messageAreaEl.className='h-10 mb-4 text-center font-medium'; messageAreaEl.style.color='var(--clr-text-default)';} }
 
-         document.addEventListener('DOMContentLoaded', () => {
+          document.addEventListener('DOMContentLoaded', () => {
     // --- Initialize Game ---
     initGame();
 
@@ -219,4 +92,3 @@ function blockAndObscureClue(container, front, clueData) {
         }
     });
 });
-
